@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relay</title>
+  <meta name="description" content="End-to-end encrypted chat. The server stores only ciphertext.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%233554E0'/%3E%3Cpath d='M9 12h14M9 17h9' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+</head>
+<body>
+  <!-- Sign in -->
+  <main id="auth" class="auth" hidden>
+    <section class="auth-panel">
+      <h1 class="brand">Relay</h1>
+      <p class="auth-lede">Messages are encrypted on this device before they leave it. The server stores and forwards ciphertext it can't read.</p>
+
+      <form id="phone-form" class="auth-step">
+        <label for="phone">Phone number</label>
+        <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+91 98765 43210" required>
+        <button type="submit" class="btn primary">Send code</button>
+      </form>
+
+      <form id="otp-form" class="auth-step" hidden>
+        <label for="otp">Code sent to <span id="otp-phone"></span></label>
+        <input id="otp" name="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code" required>
+        <p id="dev-otp" class="hint" hidden></p>
+        <button type="submit" class="btn primary">Verify and set up this device</button>
+        <button type="button" id="otp-back" class="btn link">Use a different number</button>
+      </form>
+
+      <form id="name-form" class="auth-step" hidden>
+        <label for="display-name">Your name</label>
+        <input id="display-name" name="name" maxlength="40" autocomplete="name" placeholder="What people will see" required>
+        <button type="submit" class="btn primary">Start chatting</button>
+      </form>
+
+      <p id="auth-error" class="error" role="alert" hidden></p>
+    </section>
+  </main>
+
+  <!-- App -->
+  <div id="app" class="app" hidden>
+    <aside class="sidebar" aria-label="Chats">
+      <header class="sidebar-head">
+        <div class="me">
+          <span class="avatar" id="me-avatar"></span>
+          <div>
+            <div id="me-name" class="me-name"></div>
+            <div id="conn" class="conn">Connecting…</div>
+          </div>
+        </div>
+        <div class="head-actions">
+          <button class="icon-btn" id="new-chat-btn" title="New chat" aria-label="New chat">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+          <button class="icon-btn" id="signout-btn" title="Sign out" aria-label="Sign out">
+            <svg viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <label class="cipher-switch">
+        <input type="checkbox" id="cipher-toggle">
+        <span class="track" aria-hidden="true"><span class="thumb"></span></span>
+        <span>Show what the server sees</span>
+      </label>
+
+      <ul id="chat-list" class="chat-list"></ul>
+      <div id="chat-list-empty" class="list-empty" hidden>
+        <p>No chats yet.</p>
+        <button class="btn primary" id="first-chat-btn">Start a chat</button>
+      </div>
+    </aside>
+
+    <section class="conversation" id="conversation" aria-live="polite">
+      <div class="conv-empty" id="conv-empty">
+        <svg viewBox="0 0 120 80" aria-hidden="true" class="conv-empty-art">
+          <rect x="6" y="10" width="62" height="34" rx="12"/><rect x="52" y="38" width="62" height="30" rx="12" class="alt"/>
+        </svg>
+        <p>Pick a chat, or start one with someone's phone number.</p>
+      </div>
+
+      <div class="conv" id="conv" hidden>
+        <header class="conv-head">
+          <button class="icon-btn back" id="back-btn" aria-label="Back to chats">
+            <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <span class="avatar" id="conv-avatar"></span>
+          <div class="conv-title">
+            <div id="conv-name" class="conv-name"></div>
+            <div id="conv-status" class="conv-status"></div>
+          </div>
+          <button class="btn ghost" id="members-btn" hidden>Members</button>
+        </header>
+
+        <div class="messages" id="messages">
+          <button class="btn link older" id="older-btn" hidden>Load earlier messages</button>
+          <ol id="message-list" class="message-list"></ol>
+        </div>
+
+        <form class="composer" id="composer">
+          <label class="icon-btn attach" title="Send a photo or file" aria-label="Send a photo or file">
+            <input type="file" id="file-input" hidden>
+            <svg viewBox="0 0 24 24"><path d="M21 12.5l-8.5 8.5a5 5 0 0 1-7-7L14 5.5a3.3 3.3 0 0 1 4.7 4.7L10.2 18.7a1.7 1.7 0 0 1-2.4-2.4L15.5 8.6"/></svg>
+          </label>
+          <textarea id="input" rows="1" placeholder="Message" aria-label="Message"></textarea>
+          <button class="send" type="submit" aria-label="Send">
+            <svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+          </button>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <!-- New chat dialog -->
+  <dialog id="new-chat-dialog" class="dialog">
+    <form method="dialog" id="new-chat-form">
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" class="tab" data-tab="direct" aria-selected="true">Person</button>
+        <button type="button" role="tab" class="tab" data-tab="group" aria-selected="false">Group</button>
+      </div>
+      <div data-panel="direct">
+        <label for="direct-phone">Their phone number</label>
+        <input id="direct-phone" type="tel" placeholder="+91 98765 43210">
+      </div>
+      <div data-panel="group" hidden>
+        <label for="group-name">Group name</label>
+        <input id="group-name" maxlength="60" placeholder="Weekend trip">
+        <label for="group-phones">Members' phone numbers</label>
+        <textarea id="group-phones" rows="3" placeholder="One per line, or separated by commas"></textarea>
+      </div>
+      <p class="error" id="new-chat-error" role="alert" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn ghost" data-close>Cancel</button>
+        <button type="submit" class="btn primary" id="new-chat-submit">Start chat</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Group members dialog -->
+  <dialog id="members-dialog" class="dialog">
+    <form method="dialog" id="members-form">
+      <h2 id="members-title">Members</h2>
+      <ul id="members-list" class="members-list"></ul>
+      <div id="add-member-row" class="add-member">
+        <input id="add-member-phone" type="tel" placeholder="Add by phone number" aria-label="Add by phone number">
+        <button type="button" class="btn primary" id="add-member-btn">Add</button>
+      </div>
+      <p class="error" id="members-error" role="alert" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn danger" id="leave-btn">Leave group</button>
+        <button type="button" class="btn ghost" data-close>Done</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

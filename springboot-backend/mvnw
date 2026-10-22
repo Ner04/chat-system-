@@ -1,0 +1,22 @@
+#!/bin/sh
+# Minimal Maven wrapper: downloads Maven 3.9.9 (or the version in .mvn/wrapper/maven-wrapper.properties)
+# into ~/.m2/wrapper the first time, then runs it. Only a JDK (17+) is needed.
+set -e
+BASEDIR=$(cd "$(dirname "$0")" && pwd)
+if command -v mvn >/dev/null 2>&1 && [ -z "$MVNW_FORCE_DOWNLOAD" ]; then
+  exec mvn -f "$BASEDIR/pom.xml" "$@"
+fi
+URL=https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.9/apache-maven-3.9.9-bin.zip
+PROPS="$BASEDIR/.mvn/wrapper/maven-wrapper.properties"
+if [ -f "$PROPS" ]; then URL=$(sed -n 's/^distributionUrl=//p' "$PROPS" | tr -d '\r'); fi
+NAME=$(basename "$URL" -bin.zip)
+DEST="${MAVEN_USER_HOME:-$HOME/.m2}/wrapper/dists/$NAME"
+if [ ! -x "$DEST/bin/mvn" ]; then
+  echo "Downloading $URL" >&2
+  mkdir -p "$DEST.tmp"
+  TMPZIP="$DEST.tmp/maven.zip"
+  if command -v curl >/dev/null 2>&1; then curl -fsSL "$URL" -o "$TMPZIP"; else wget -q "$URL" -O "$TMPZIP"; fi
+  (cd "$DEST.tmp" && unzip -q maven.zip)
+  rm -rf "$DEST" && mv "$DEST.tmp/$NAME" "$DEST" && rm -rf "$DEST.tmp"
+fi
+exec "$DEST/bin/mvn" -f "$BASEDIR/pom.xml" "$@"

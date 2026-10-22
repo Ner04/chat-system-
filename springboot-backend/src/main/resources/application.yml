@@ -1,0 +1,35 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  application:
+    name: relay-chat
+  data:
+    mongodb:
+      uri: ${MONGO_URI:mongodb://127.0.0.1:27017/chat_system}
+      database: ${MONGO_DB:chat_system}
+  jackson:
+    # Same JSON shape as the original API: message_id, chat_id, up_to_seq …
+    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+relay:
+  jwt-secret: ${JWT_SECRET:dev-only-change-me}
+  media-secret: ${MEDIA_SECRET:${JWT_SECRET:dev-only-media-secret}}
+  # In development the OTP is returned by the API and logged. Set DEV_OTP=false in production.
+  dev-otp: ${DEV_OTP:true}
+  otp-ttl-seconds: 300
+  message-retention-days: ${MESSAGE_RETENTION_DAYS:30}
+  max-devices-per-user: 5
+  max-group-size: 256
+  max-ciphertext-chars: 65536
+  max-media-bytes: 26214400
+  heartbeat-ms: 30000
+  blob-dir: ${BLOB_DIR:.data/blobs}
+  allowed-origins: ${ALLOWED_ORIGINS:*}
+
+logging:
+  level:
+    org.mongodb.driver: warn
